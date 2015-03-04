@@ -1,4 +1,4 @@
-package supervised_experiments;
+package experiments;
 import java.util.Arrays;
 
 

@@ -3,8 +3,8 @@ import java.io.PrintStream;
 import java.io.PrintWriter;
 
 import shared.DataSet;
-import supervised_experiments.Classifier;
-import supervised_experiments.Evaluator;
+import experiments.Classifier;
+import experiments.Evaluator;
 import func.DecisionTreeClassifier;
 import func.dtree.ChiSquarePruningCriteria;
 import func.dtree.GINISplitEvaluator;

@@ -2,11 +2,11 @@ package experiments.knn;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 
+import experiments.Classifier;
+import experiments.Evaluator;
 import func.KNNClassifier;
 import shared.DataSet;
 import shared.DistanceMeasure;
-import supervised_experiments.Classifier;
-import supervised_experiments.Evaluator;
 
 
 public class KnnClassifierWrapper implements Classifier {

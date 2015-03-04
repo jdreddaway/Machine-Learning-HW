@@ -151,7 +151,7 @@ public class CustomAdaBoostClassifier extends AbstractConditionalDistribution im
     }
     
     /**
-     * @see func.Classifier#classDistribution(shared.Instance)
+     * @see experiments.Classifier#classDistribution(shared.Instance)
      */
     public Distribution distributionFor(Instance data) {
         Instance v = value(data);

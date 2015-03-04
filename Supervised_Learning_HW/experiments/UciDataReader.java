@@ -1,4 +1,4 @@
-package supervised_experiments;
+package experiments;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;

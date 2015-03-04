@@ -2,9 +2,9 @@ package experiments.boosting;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 
+import experiments.Classifier;
+import experiments.Evaluator;
 import shared.DataSet;
-import supervised_experiments.Classifier;
-import supervised_experiments.Evaluator;
 
 
 public class BoostingClassifierWrapper implements Classifier {

@@ -5,6 +5,8 @@ import java.io.PrintWriter;
 import data.filter.NormalizingFilter;
 import dist.DiscreteDistribution;
 import dist.Distribution;
+import experiments.Classifier;
+import experiments.Evaluator;
 import func.SimpleSupportVectorMachineClassifier;
 import func.svm.Kernel;
 import func.svm.LinearKernel;
@@ -14,8 +16,6 @@ import shared.DataSet;
 import shared.DataSetDescription;
 import shared.Instance;
 import shared.filt.DiscreteToBinaryFilter;
-import supervised_experiments.Classifier;
-import supervised_experiments.Evaluator;
 
 
 public class SvmClassifierWrapper implements Classifier {
@@ -85,7 +85,7 @@ public class SvmClassifierWrapper implements Classifier {
     }
     
     /**
-     * @see func.Classifier#classDistribution(shared.Instance)
+     * @see experiments.Classifier#classDistribution(shared.Instance)
      */
     public Distribution distributionFor(Instance data) {
         Instance v = value(data);
