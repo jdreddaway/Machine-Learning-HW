@@ -2,6 +2,7 @@ package nnet_experiments;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.util.stream.IntStream;
 
 import data.UciDataReader;
 import func.nn.NeuralNetwork;
@@ -19,7 +20,7 @@ public class Program {
 		String trainingPath = "higgs/training1000.csv";
 		String testingPath = "higgs/testing1000.csv";
 		int numHiddenNodes = 15;
-		int numIterations = 10000;
+		int numIterations = 3000;
 		int numRestarts = 10;
 
 		runRandomizedHillclimbing(trainingPath, testingPath, numHiddenNodes, numIterations, numRestarts);
@@ -29,30 +30,36 @@ public class Program {
 			int numIterations, int numRestarts) throws FileNotFoundException {
 		DataSet trainingData = new UciDataReader(new File(trainingPath)).read();
 		DataSet testingData = new UciDataReader(new File(testingPath)).read();
+		BackPropagationNetworkFactory networkFactory = new BackPropagationNetworkFactory();
 		
-		int bestTestingCorrect = 0;
-		int correspondingBestTrainingCorrect = 0;
-		for (int i = 0; i < numRestarts; i++) {
-			NeuralNetwork network = createNetwork(trainingData, numHiddenNodes);
-			NeuralNetworkOptimizationProblem problem = new NeuralNetworkOptimizationProblem(trainingData, network, new SumOfSquaresError());
-			RandomizedHillClimbing algorithm = new RandomizedHillClimbing(problem);
-			
-			runAlgorithm(algorithm, numIterations);
-			int numTrainingCorrect = countNumCorrect(network, trainingData);
-			int numTestingCorrect = countNumCorrect(network, testingData);
-			
-			System.out.println("Training Correct: " + numTrainingCorrect);
-			System.out.println("Testing Correct: " + numTestingCorrect);
-			System.out.println();
-			
-			if (numTestingCorrect > bestTestingCorrect) {
-				bestTestingCorrect = numTestingCorrect;
-				correspondingBestTrainingCorrect = numTrainingCorrect;
-			}
-		}
+		long start = System.currentTimeMillis();
+		NetworkPerformance best = IntStream.range(0, numRestarts).parallel()
+				.mapToObj(i -> runRandomizedHillclimbing(numHiddenNodes, numIterations, trainingData, testingData, networkFactory))
+				.max(NetworkPerformance::compareByTestingPerf).get();
+		long end = System.currentTimeMillis();
 		
-		System.out.println("Best Training: " + correspondingBestTrainingCorrect);
-		System.out.println("Best Testing: " + bestTestingCorrect);
+		System.out.println("Best Training: " + best.numTrainingCorrect);
+		System.out.println("Best Testing: " + best.numTestingCorrect);
+		
+		System.out.println("Time: " + (end - start) / 1000 + " seconds");
+	}
+
+	private static NetworkPerformance runRandomizedHillclimbing(int numHiddenNodes,
+			int numIterations, DataSet trainingData, DataSet testingData,
+			BackPropagationNetworkFactory networkFactory) {
+		NeuralNetwork network = createNetwork(networkFactory, trainingData, numHiddenNodes);
+		NeuralNetworkOptimizationProblem problem = new NeuralNetworkOptimizationProblem(trainingData, network, new SumOfSquaresError());
+		RandomizedHillClimbing algorithm = new RandomizedHillClimbing(problem);
+		
+		runAlgorithm(algorithm, numIterations);
+		int numTrainingCorrect = countNumCorrect(network, trainingData);
+		int numTestingCorrect = countNumCorrect(network, testingData);
+		
+		System.out.println("Training Correct: " + numTrainingCorrect);
+		System.out.println("Testing Correct: " + numTestingCorrect);
+		System.out.println();
+		
+		return new NetworkPerformance(numTrainingCorrect, numTestingCorrect);
 	}
 	
 	private static int countNumCorrect(NeuralNetwork network, DataSet data) {
@@ -79,12 +86,12 @@ public class Program {
 		}
 	}
 
-	private static NeuralNetwork createNetwork(DataSet trainingData,
+	private static NeuralNetwork createNetwork(BackPropagationNetworkFactory networkFactory, DataSet trainingData,
 			int numHiddenNodes) {
 		int numAttributes = new DataSetDescription(trainingData).getAttributeCount();
-		BackPropagationNetworkFactory networkFactory = new BackPropagationNetworkFactory();
 		int[] layerNodeCounts = { numAttributes, numHiddenNodes, 1 };
 		NeuralNetwork network = networkFactory.createClassificationNetwork(layerNodeCounts);
+
 		return network;
 	}
 	
