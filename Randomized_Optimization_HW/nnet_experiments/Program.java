@@ -21,10 +21,13 @@ public class Program {
 		DataSet testingData = new UciDataReader(new File(testingPath)).read();
 
 		BackPropagationNetworkFactory networkFactory = new BackPropagationNetworkFactory();
-		PrintStream outputStream = new PrintStream(new File("output/random_hillclimbing.out")); // output folder needs to already exist
-		RandomizedHillclimbingExperiment hillclimbingExp = new RandomizedHillclimbingExperiment(
-				outputStream, networkFactory, numHiddenNodes, numIterations, numRestarts, trainingData, testingData);
-		hillclimbingExp.runWithRestarts();
+
+		// output folder needs to already exist
+		try (PrintStream outputStream = new PrintStream(new File("output/random_hillclimbing.out"))) { 
+			RandomizedHillclimbingExperiment hillclimbingExp = new RandomizedHillclimbingExperiment(
+					outputStream, networkFactory, numHiddenNodes, numIterations, numRestarts, trainingData, testingData);
+			hillclimbingExp.runWithRestarts();
+		}
 	}
 	
 }
