@@ -1,10 +1,10 @@
 package nnet_experiments;
 
 import java.io.PrintStream;
+import java.util.function.Function;
 import java.util.stream.IntStream;
 
 import opt.OptimizationAlgorithm;
-import opt.RandomizedHillClimbing;
 import opt.example.NeuralNetworkOptimizationProblem;
 import shared.DataSet;
 import shared.DataSetDescription;
@@ -12,7 +12,7 @@ import shared.SumOfSquaresError;
 import func.nn.NeuralNetwork;
 import func.nn.backprop.BackPropagationNetworkFactory;
 
-public class RandomizedHillclimbingExperiment {
+public class Experiment {
 	
 	private final PrintStream outputStream;
 	private final BackPropagationNetworkFactory networkFactory;
@@ -21,11 +21,14 @@ public class RandomizedHillclimbingExperiment {
 	private final DataSet trainingData;
 	private final DataSet testingData;
 	private final int numRestarts;
+	private final Function<NeuralNetworkOptimizationProblem, OptimizationAlgorithm> algorithmFactory;
 
-	public RandomizedHillclimbingExperiment(PrintStream outputStream, BackPropagationNetworkFactory networkFactory,
+	public Experiment(PrintStream outputStream, BackPropagationNetworkFactory networkFactory,
+			Function<NeuralNetworkOptimizationProblem, OptimizationAlgorithm> algorithmMaker,
 			int numHiddenNodes, int numIterations, int numRestarts, DataSet trainingData, DataSet testingData) {
 		this.outputStream = outputStream;
 		this.networkFactory = networkFactory;
+		this.algorithmFactory = algorithmMaker;
 		this.numHiddenNodes = numHiddenNodes;
 		this.numIterations = numIterations;
 		this.numRestarts = numRestarts;
@@ -36,7 +39,7 @@ public class RandomizedHillclimbingExperiment {
 	public void runWithRestarts() {
 		long start = System.currentTimeMillis();
 		NetworkPerformance best = IntStream.range(0, numRestarts).parallel()
-				.mapToObj(i -> run())
+				.mapToObj(i -> runOnce())
 				.max(NetworkPerformance::compareByTestingPerf).get();
 		long end = System.currentTimeMillis();
 		
@@ -46,10 +49,10 @@ public class RandomizedHillclimbingExperiment {
 		System.out.println("Time: " + (end - start) / 1000 + " seconds");
 	}
 
-	private NetworkPerformance run() {
+	public NetworkPerformance runOnce() {
 		NeuralNetwork network = createNetwork();
 		NeuralNetworkOptimizationProblem problem = new NeuralNetworkOptimizationProblem(trainingData, network, new SumOfSquaresError());
-		RandomizedHillClimbing algorithm = new RandomizedHillClimbing(problem);
+		OptimizationAlgorithm algorithm = algorithmFactory.apply(problem);
 		
 		runAlgorithm(algorithm);
 		int numTrainingCorrect = countNumCorrect(network, trainingData);
