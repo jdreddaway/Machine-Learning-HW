@@ -2,17 +2,12 @@ package nnet_experiments;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.PrintStream;
-import java.util.function.Function;
 
-import opt.OptimizationAlgorithm;
 import opt.RandomizedHillClimbing;
 import opt.SimulatedAnnealing;
 import opt.ga.StandardGeneticAlgorithm;
-import opt.example.NeuralNetworkOptimizationProblem;
 import shared.DataSet;
 import data.UciDataReader;
-import func.nn.backprop.BackPropagationNetworkFactory;
 
 public class Program {
 	
@@ -28,7 +23,7 @@ public class Program {
 
 		ExperimentRunner expFactory = new ExperimentRunner(numHiddenNodes, numIterations, numRestarts, trainingData, testingData);
 
-		//expFactory.runExperiment("output/random_hillclimbing.out", prob -> new RandomizedHillClimbing(prob));
+		expFactory.runWithRestarts("output/random_hillclimbing.out", prob -> new RandomizedHillClimbing(prob));
 
 		double initialTemp = 1E11;
 		double coolingExponent = .95;
@@ -40,7 +35,7 @@ public class Program {
 		int populationSize = numRestarts;
 		int numToMate = (int) (matePercentage * populationSize);
 		int numToMutate = (int) (mutatePercentage * populationSize);
-		expFactory.runWithRestarts("output/genetic.out",
+		expFactory.runOnce("output/genetic.out",
 				prob -> new StandardGeneticAlgorithm(populationSize, numToMate, numToMutate, prob));
 	}
 }

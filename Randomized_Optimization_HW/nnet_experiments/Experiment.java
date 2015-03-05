@@ -46,15 +46,27 @@ public class Experiment {
 		System.out.println("Best Training: " + best.numTrainingCorrect);
 		System.out.println("Best Testing: " + best.numTestingCorrect);
 		
-		System.out.println("Time: " + (end - start) / 1000 + " seconds");
+		long time = (end - start) / 1000;
+		outputStream.println(time);
+		System.out.println("Time: " + time + " seconds");
+	}
+	
+	public void runOnceWithTiming() {
+		long start = System.currentTimeMillis();
+		runOnce();
+		long end = System.currentTimeMillis();
+		long time = (end - start) / 1000;
+		System.out.println("Time: " + time + " seconds");
+		outputStream.println(time);
 	}
 
-	public NetworkPerformance runOnce() {
+	private NetworkPerformance runOnce() {
 		NeuralNetwork network = createNetwork();
 		NeuralNetworkOptimizationProblem problem = new NeuralNetworkOptimizationProblem(trainingData, network, new SumOfSquaresError());
 		OptimizationAlgorithm algorithm = algorithmFactory.apply(problem);
 		
 		runAlgorithm(algorithm);
+		network.setWeights(algorithm.getOptimal().getData());
 		int numTrainingCorrect = countNumCorrect(network, trainingData);
 		int numTestingCorrect = countNumCorrect(network, testingData);
 		

@@ -46,10 +46,10 @@ public class ExperimentRunner {
 	}
 	
 	public void runOnce(String outputFilepath,
-	Function<NeuralNetworkOptimizationProblem, OptimizationAlgorithm> algoFactory) throws FileNotFoundException {
+			Function<NeuralNetworkOptimizationProblem, OptimizationAlgorithm> algoFactory) throws FileNotFoundException {
 		try (PrintStream outputStream = new PrintStream(new File(outputFilepath))) { 
 			Experiment hillclimbingExp = createExperiment(outputStream, algoFactory);
-			hillclimbingExp.runOnce();
+			hillclimbingExp.runOnceWithTiming();
 		}
 	}
 }
