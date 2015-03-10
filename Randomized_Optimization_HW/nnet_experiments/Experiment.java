@@ -83,7 +83,7 @@ public class Experiment {
 		outputStream.println(numTrainingCorrect + "," + numTestingCorrect);
 	}
 	
-	private static int countNumCorrect(NeuralNetwork network, DataSet data) {
+	public static int countNumCorrect(NeuralNetwork network, DataSet data) {
 		int numCorrect = 0;
 		for(int i = 0; i < data.size(); i++) {
             network.setInputValues(data.get(i).getData());
