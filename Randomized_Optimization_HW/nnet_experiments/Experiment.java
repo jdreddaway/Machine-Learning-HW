@@ -1,13 +1,14 @@
 package nnet_experiments;
 
 import java.io.PrintStream;
-import java.util.function.Function;
+import java.util.function.BiFunction;
 import java.util.stream.IntStream;
 
 import opt.OptimizationAlgorithm;
 import opt.example.NeuralNetworkOptimizationProblem;
 import shared.DataSet;
 import shared.DataSetDescription;
+import shared.Instance;
 import shared.SumOfSquaresError;
 import func.nn.NeuralNetwork;
 import func.nn.backprop.BackPropagationNetworkFactory;
@@ -21,14 +22,11 @@ public class Experiment {
 	private final DataSet trainingData;
 	private final DataSet testingData;
 	private final int numRestarts;
-	private final Function<NeuralNetworkOptimizationProblem, OptimizationAlgorithm> algorithmFactory;
 
 	public Experiment(PrintStream outputStream, BackPropagationNetworkFactory networkFactory,
-			Function<NeuralNetworkOptimizationProblem, OptimizationAlgorithm> algorithmMaker,
 			int numHiddenNodes, int numIterations, int numRestarts, DataSet trainingData, DataSet testingData) {
 		this.outputStream = outputStream;
 		this.networkFactory = networkFactory;
-		this.algorithmFactory = algorithmMaker;
 		this.numHiddenNodes = numHiddenNodes;
 		this.numIterations = numIterations;
 		this.numRestarts = numRestarts;
@@ -36,10 +34,10 @@ public class Experiment {
 		this.testingData = testingData;
 	}
 	
-	public void runWithRestarts() {
+	public void runWithRestarts(AlgorithmFactory<OptimizationAlgorithm> algorithmFactory) {
 		long start = System.currentTimeMillis();
 		NetworkPerformance best = IntStream.range(0, numRestarts).parallel()
-				.mapToObj(i -> runOnce())
+				.mapToObj(i -> runOnceAndPrint(algorithmFactory))
 				.max(NetworkPerformance::compareByTestingPerf).get();
 		long end = System.currentTimeMillis();
 		
@@ -51,36 +49,68 @@ public class Experiment {
 		System.out.println("Time: " + time + " seconds");
 	}
 	
-	public void runOnceWithTiming() {
+	private NetworkPerformance runOnceAndPrint(AlgorithmFactory<OptimizationAlgorithm> algorithmFactory) {
+		NetworkPerformance perf = runOnce(algorithmFactory, this::optimumInterpreter);
+		printResult(perf.numTrainingCorrect, perf.numTestingCorrect);
+		return perf;
+	}
+	
+	public void runGenetic(AlgorithmFactory<StandardGeneticAlgorithmImproved> algorithmFactory) {
 		long start = System.currentTimeMillis();
-		runOnce();
+		runOnce(algorithmFactory, this::geneticInterpreter);
 		long end = System.currentTimeMillis();
 		long time = (end - start) / 1000;
 		System.out.println("Time: " + time + " seconds");
 		outputStream.println(time);
 	}
 
-	private NetworkPerformance runOnce() {
+	private <A extends OptimizationAlgorithm> NetworkPerformance runOnce(AlgorithmFactory<A> algorithmFactory,
+			BiFunction<NeuralNetwork, A, NetworkPerformance> resultsInterpreter) {
 		NeuralNetwork network = createNetwork();
 		NeuralNetworkOptimizationProblem problem = new NeuralNetworkOptimizationProblem(trainingData, network, new SumOfSquaresError());
-		OptimizationAlgorithm algorithm = algorithmFactory.apply(problem);
+		A algorithm = algorithmFactory.apply(problem);
 		
 		runAlgorithm(algorithm);
-		network.setWeights(algorithm.getOptimal().getData());
+		return resultsInterpreter.apply(network, algorithm);
+	}
+	
+	private NetworkPerformance optimumInterpreter(NeuralNetwork network, OptimizationAlgorithm algorithm) {
+		return evaluatePerformance(network, algorithm.getOptimal());
+	}
+	
+	private NetworkPerformance geneticInterpreter(NeuralNetwork network, StandardGeneticAlgorithmImproved algorithm) {
+		Instance[] instances = algorithm.getPopulation();
+		NetworkPerformance best = evaluatePerformance(network, instances[0]);
+		for (int i = 1; i < instances.length; i++) {
+			NetworkPerformance perf = evaluatePerformance(network, instances[i]);
+			if (NetworkPerformance.compareByTestingPerf(perf, best) > 0) {
+				best = perf;
+			}
+		}
+		
+		return best;
+	}
+	
+	private NetworkPerformance evaluatePerformance(NeuralNetwork network, Instance instance) {
+		network.setWeights(instance.getData());
 		int numTrainingCorrect = countNumCorrect(network, trainingData);
 		int numTestingCorrect = countNumCorrect(network, testingData);
 		
 		printResult(numTrainingCorrect, numTestingCorrect);
 		
+		return new NetworkPerformance(numTrainingCorrect, numTestingCorrect);	
+	}
+	
+	private synchronized void printResultToFile(int numTrainingCorrect, int numTestingCorrect) {
+		outputStream.println(numTrainingCorrect + "," + numTestingCorrect);
+	}
+	
+	private void printResult(int numTrainingCorrect, int numTestingCorrect) {
+		printResultToFile(numTrainingCorrect, numTestingCorrect);
+
 		System.out.println("Training Correct: " + numTrainingCorrect);
 		System.out.println("Testing Correct: " + numTestingCorrect);
 		System.out.println();
-		
-		return new NetworkPerformance(numTrainingCorrect, numTestingCorrect);
-	}
-	
-	private synchronized void printResult(int numTrainingCorrect, int numTestingCorrect) {
-		outputStream.println(numTrainingCorrect + "," + numTestingCorrect);
 	}
 	
 	public static int countNumCorrect(NeuralNetwork network, DataSet data) {

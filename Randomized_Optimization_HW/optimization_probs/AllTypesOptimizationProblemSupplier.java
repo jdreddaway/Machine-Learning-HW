@@ -51,7 +51,7 @@ public class AllTypesOptimizationProblemSupplier {
 	}
 	
 	public static AllTypesOptimizationProblemSupplier createContinuousPeaksProblem() {
-	    final int N = 60;
+	    final int N = 400;
 	    final int T = N / 10;
 
 		int[] ranges = new int[N];
@@ -70,7 +70,7 @@ public class AllTypesOptimizationProblemSupplier {
 	}
 	
 	public static AllTypesOptimizationProblemSupplier createCountOnesProblem() {
-		final int N = 80;
+		final int N = 500;
 		int[] ranges = new int[N];
         Arrays.fill(ranges, 2);
         EvaluationFunction ef = new CountOnesEvaluationFunction();
@@ -87,7 +87,7 @@ public class AllTypesOptimizationProblemSupplier {
 	}
 	
 	public static AllTypesOptimizationProblemSupplier createFlipFlopProblem() {
-		final int N = 80;
+		final int N = 400;
 	    final int T = N/10;
 
 		int[] ranges = new int[N];
@@ -149,9 +149,11 @@ public class AllTypesOptimizationProblemSupplier {
         }
         // for rhc, sa, and ga we use a permutation based encoding
 
-        TravelingSalesmanEvaluationFunction ef = new TravelingSalesmanRouteEvaluationFunction(points);
+        TravelingSalesmanEvaluationFunction ef = new TravelingSalesmanRouteEvalFnImproved(points);
+        //TravelingSalesmanEvaluationFunction ef = new TravelingSalesmanRouteEvaluationFunction(points);
         Distribution odd = new DiscretePermutationDistribution(N);
-        NeighborFunction nf = new SwapNeighbor();
+        NeighborFunction nf = new SwapConsecutiveNeighbors();
+        //NeighborFunction nf = new SwapNeighbor();
         MutationFunction mf = new SwapMutation();
         CrossoverFunction cf = new TravelingSalesmanCrossOver(ef);
 
@@ -159,14 +161,32 @@ public class AllTypesOptimizationProblemSupplier {
         Supplier<GeneticAlgorithmProblem> gap = () -> new GenericGeneticAlgorithmProblem(ef, odd, mf, cf);
         
         // for mimic we use a sort encoding
-        TravelingSalesmanEvaluationFunction efs = new TravelingSalesmanSortEvaluationFunction(points);
+        //TravelingSalesmanEvaluationFunction efs = new TravelingSalesmanSortEvaluationFunction(points);
         int[] ranges = new int[N];
         Arrays.fill(ranges, N);
         Distribution oddProb = new  DiscreteUniformDistribution(ranges);
         Distribution df = new DiscreteDependencyTree(.1, ranges); 
-        Supplier<ProbabilisticOptimizationProblem> pop = () -> new GenericProbabilisticOptimizationProblem(efs, oddProb, df);
+        Supplier<ProbabilisticOptimizationProblem> pop = () -> new GenericProbabilisticOptimizationProblem(ef, oddProb, df);
         
-        //TODO is it a problem that MIMIC uses a different evaluation function?
         return new AllTypesOptimizationProblemSupplier("TravelingSalesman", hcp, gap, pop, ef);
+	}
+	
+	public static AllTypesOptimizationProblemSupplier createFourPeaksProblem() {
+		final int N = 600;
+	    final int T = N / 5;
+
+		int[] ranges = new int[N];
+        Arrays.fill(ranges, 2);
+        EvaluationFunction ef = new FourPeaksEvaluationFunction(T);
+        Distribution odd = new DiscreteUniformDistribution(ranges);
+        NeighborFunction nf = new DiscreteChangeOneNeighbor(ranges);
+        MutationFunction mf = new DiscreteChangeOneMutation(ranges);
+        CrossoverFunction cf = new SingleCrossOver();
+        Distribution df = new DiscreteDependencyTree(.1, ranges); 
+        Supplier<HillClimbingProblem> hcp = () -> new GenericHillClimbingProblem(ef, odd, nf);
+        Supplier<GeneticAlgorithmProblem> gap = () -> new GenericGeneticAlgorithmProblem(ef, odd, mf, cf);
+        Supplier<ProbabilisticOptimizationProblem> pop = () -> new GenericProbabilisticOptimizationProblem(ef, odd, df);
+        
+        return new AllTypesOptimizationProblemSupplier("FourPeaks", hcp, gap, pop, ef);
 	}
 }

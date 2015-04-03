@@ -50,20 +50,20 @@ public class Program {
 		 * for 0.01% = e^(-1 / (1E11 * coolingRate^3000))
 		 * coolingRate = ~0.99
 		 */
+		/*
 		double coolingRate = .99;
 
-		/*
 		expFactory.runWithRestarts("output/simulated_annealing.out",
 				prob -> new SimulatedAnnealing(initialTemp, coolingRate, prob));
+		*/
 
 		double matePercentage = 0.55;
 		double mutatePercentage = 0.15;
 		int populationSize = numRestarts;
 		int numToMate = (int) (matePercentage * populationSize);
 		int numToMutate = (int) (mutatePercentage * populationSize);
-		expFactory.runOnce("output/genetic.out",
-				prob -> new StandardGeneticAlgorithm(populationSize, numToMate, numToMutate, prob));
-		*/
+		expFactory.runGenetic("output/genetic.out",
+				prob -> new StandardGeneticAlgorithmImproved(populationSize, numToMate, numToMutate, prob));
 		
 		//runMimicExperiments(numHiddenNodes, numIterations, trainingData, testingData);
 	}

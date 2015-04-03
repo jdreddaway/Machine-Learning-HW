@@ -1,4 +1,4 @@
-package optimization_probs;
+package optimization_probs.runners;
 
 import java.util.stream.Stream;
 
@@ -20,11 +20,14 @@ public class IterationRunner extends AlgorithmRunner {
 	 * @return the optimal instance
 	 */
 	@Override
-	public Stream<Instance> get() {
+	public RunResult get() {
+		double[] errorPerIteration = new double[numIterations];
+
 		for (int i = 0; i < numIterations; i++) {
-			algo.train();
+			errorPerIteration[i] = algo.train();
 		}
 		
-		return Stream.of(algo.getOptimal());
+		RunResult result = new RunResult(new Instance[] { algo.getOptimal() }, errorPerIteration);
+		return result;
 	}
 }

@@ -4,16 +4,19 @@ import java.io.FileNotFoundException;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.function.Function;
+import java.util.stream.DoubleStream;
 import java.util.stream.Stream;
 
-import opt.HillClimbingProblem;
 import opt.OptimizationAlgorithm;
 import opt.RandomizedHillClimbing;
 import opt.SimulatedAnnealing;
-import opt.ga.GeneticAlgorithmProblem;
 import opt.ga.StandardGeneticAlgorithm;
-import opt.prob.MIMIC;
-import shared.Instance;
+import optimization_probs.runners.AlgorithmRunner;
+import optimization_probs.runners.AlgorithmRunnerFactory;
+import optimization_probs.runners.IterationRunner;
+import optimization_probs.runners.RunResult;
+import optimization_probs.runners.WithParallelRestartsRunner;
 
 public class Program {
 	
@@ -46,6 +49,7 @@ public class Program {
 	 * 	ContinuousPeaks
 	 * 	CountOnes
 	 * 	FlipFlop
+	 * 	FourPeaks
 	 * 	Knapsack
 	 * 	TravelingSalesman
 	 * 
@@ -62,14 +66,18 @@ public class Program {
 			AllTypesOptimizationProblemSupplier problemSupplier, Collection<AlgorithmRunnerFactory> runnerFactories) {
 		for (AlgorithmRunnerFactory each : runnerFactories) {
 			AlgorithmRunner algoRunner = each.apply(problemSupplier);
-			Stream<Instance> results = algoRunner.get();
+			RunResult result = algoRunner.get();
 
 			String outputFilepath = "output/" + problemSupplier.problemName + "_" + algoRunner.algoName + ".csv";
-			try (PrintStream writer = new PrintStream(outputFilepath)) {
-				results.forEach((instance) -> {
-					double perf = problemSupplier.evalFn.value(instance);
-					writer.println(perf);
-				});
+			String errorFilepath = "output/" + problemSupplier.problemName + "_" + algoRunner.algoName + "_error.csv";
+			try (
+					PrintStream writer = new PrintStream(outputFilepath);
+					PrintStream errorWriter = new PrintStream(errorFilepath)
+			) {
+				DoubleStream perfs = result.evaluateInstances(problemSupplier.evalFn);
+				perfs.sequential().forEach(perf -> writer.println(perf));
+				
+				result.printErrors(errorWriter);
 			} catch (FileNotFoundException e) {
 				throw new RuntimeException("Could not open " + outputFilepath);
 			}
@@ -80,11 +88,12 @@ public class Program {
 	
 	private static AllTypesOptimizationProblemSupplier[] createProblems() {
 		return new AllTypesOptimizationProblemSupplier[] {
-				AllTypesOptimizationProblemSupplier.createContinuousPeaksProblem(),
-				AllTypesOptimizationProblemSupplier.createCountOnesProblem(),
-				AllTypesOptimizationProblemSupplier.createFlipFlopProblem(),
+				//AllTypesOptimizationProblemSupplier.createContinuousPeaksProblem(), 
+				//AllTypesOptimizationProblemSupplier.createCountOnesProblem(), 
+				//AllTypesOptimizationProblemSupplier.createFlipFlopProblem(), 
 				AllTypesOptimizationProblemSupplier.createKnapsackProblem(),
-				//AllTypesOptimizationProblemSupplier.createTravelingSalesmanProblem() TODO uncomment
+				//AllTypesOptimizationProblemSupplier.createTravelingSalesmanProblem(),
+				//AllTypesOptimizationProblemSupplier.createFourPeaksProblem() 
 		};
 	}
 	
@@ -92,14 +101,28 @@ public class Program {
 		Collection<AlgorithmRunnerFactory> algoRunnerFactories = new ArrayList<>();
 
 		int numSamples = 1000;
-		int numIterations = 3000;
 		
-		algoRunnerFactories.add(prob -> new WithRestartsRunner(
+		// Using just iterations
+		int numIterations = 3000;
+		Function<OptimizationAlgorithm, AlgorithmRunner> restartsIterationRunnerSupplier = 
+				(algo) -> new IterationRunner("iter_" + algo.getClass().getSimpleName(), algo, numIterations);
+		Function<OptimizationAlgorithm, AlgorithmRunner> noRestartsIterationRunnerSupplier = restartsIterationRunnerSupplier;
+
+		// Using time to determine when to stop
+		/*
+		int totalTimeToRun = 60000;
+		Function<OptimizationAlgorithm, AlgorithmRunner> restartsIterationRunnerSupplier =
+				(algo) -> new TimedRunner(algo, totalTimeToRun / numSamples);
+		Function<OptimizationAlgorithm, AlgorithmRunner> noRestartsIterationRunnerSupplier =
+				(algo) -> new TimedRunner(algo, totalTimeToRun);
+		*/
+		
+		algoRunnerFactories.add(prob -> new WithParallelRestartsRunner(
 						"RandomizedHillClimbing",
 						prob,
 						p -> new RandomizedHillClimbing(p.hillClimbingProb.get()),
 						numSamples,
-						numIterations));
+						restartsIterationRunnerSupplier));
 
 		double initialTemp = 1E11;
 
@@ -111,28 +134,25 @@ public class Program {
 		 * for 0.01% = e^(-1 / (1E11 * coolingRate^3000))
 		 * coolingRate = ~0.99
 		 */
-		double coolingRate = .99;
-		algoRunnerFactories.add(prob -> new WithRestartsRunner(
+		double coolingRate = .98;
+		algoRunnerFactories.add(prob -> new WithParallelRestartsRunner(
 						"SimulatedAnnealing",
 						prob,
 						p -> new SimulatedAnnealing(initialTemp, coolingRate, prob.hillClimbingProb.get()),
 						numSamples,
-						numIterations));
+						restartsIterationRunnerSupplier));
 		
+
 		double matePercentage = 0.55;
 		double mutatePercentage = 0.15;
 		int numToMate = (int) (matePercentage * numSamples);
 		int numToMutate = (int) (mutatePercentage * numSamples);
-		algoRunnerFactories.add(prob -> new IterationRunner(
-				"Genetic",
-				new StandardGeneticAlgorithm(numSamples, numToMate, numToMutate, prob.geneticProb.get()),
-				numIterations));
+		algoRunnerFactories.add(prob -> noRestartsIterationRunnerSupplier.apply(
+					new StandardGeneticAlgorithm(numSamples, numToMate, numToMutate, prob.geneticProb.get())));
 		
 		int numToKeep = 300;
-		algoRunnerFactories.add(prob -> new IterationRunner(
-				"MIMIC",
-				new MIMIC(numSamples, numToKeep, prob.probabilisticProb.get()),
-				numIterations));
+		algoRunnerFactories.add(prob -> noRestartsIterationRunnerSupplier.apply(
+				new MimicImproved(numSamples, numToKeep, prob.probabilisticProb.get())));
 		
 		return algoRunnerFactories;
 	}

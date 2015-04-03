@@ -30,26 +30,25 @@ public class ExperimentRunner {
 		networkFactory = new BackPropagationNetworkFactory();
 	}
 
-	private Experiment createExperiment(PrintStream outputStream,
-			Function<NeuralNetworkOptimizationProblem, OptimizationAlgorithm> algorithmFactory) {
+	private Experiment createExperiment(PrintStream outputStream) {
 		return new Experiment(
-				outputStream, networkFactory, algorithmFactory,
+				outputStream, networkFactory,
 				numHiddenNodes, numIterations, numRestarts, trainingData, testingData);
 	}
 	
 	public void runWithRestarts(String outputFilepath,
-			Function<NeuralNetworkOptimizationProblem, OptimizationAlgorithm> algoFactory) throws FileNotFoundException {
+			AlgorithmFactory<OptimizationAlgorithm> algoFactory) throws FileNotFoundException {
 		try (PrintStream outputStream = new PrintStream(new File(outputFilepath))) { 
-			Experiment hillclimbingExp = createExperiment(outputStream, algoFactory);
-			hillclimbingExp.runWithRestarts();
+			Experiment hillclimbingExp = createExperiment(outputStream);
+			hillclimbingExp.runWithRestarts(algoFactory);
 		}
 	}
 	
-	public void runOnce(String outputFilepath,
-			Function<NeuralNetworkOptimizationProblem, OptimizationAlgorithm> algoFactory) throws FileNotFoundException {
+	public void runGenetic(String outputFilepath,
+			AlgorithmFactory<StandardGeneticAlgorithmImproved> algoFactory) throws FileNotFoundException {
 		try (PrintStream outputStream = new PrintStream(new File(outputFilepath))) { 
-			Experiment hillclimbingExp = createExperiment(outputStream, algoFactory);
-			hillclimbingExp.runOnceWithTiming();
+			Experiment hillclimbingExp = createExperiment(outputStream);
+			hillclimbingExp.runGenetic(algoFactory);
 		}
 	}
 }
