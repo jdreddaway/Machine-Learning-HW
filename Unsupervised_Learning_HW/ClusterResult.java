@@ -19,11 +19,13 @@ public class ClusterResult {
 		}
 	}
 	
-	public static ClusterResult create(int k, FunctionApproximater funcApproximater, DataSet data) {
-		int[] numInstancesPerCluster = new int[k];
+	public static ClusterResult create(FunctionApproximater clusterer, DataSet data, int numClusters) {
+		int[] numInstancesPerCluster = new int[numClusters];
 
-		for (Instance each : data) {
-			int cluster = funcApproximater.value(each).getDiscrete();
+		for (int i = 0; i < data.size(); i++) {
+			Instance currentInstance = data.get(i);
+			int cluster = clusterer.value(currentInstance).getDiscrete();
+
 			numInstancesPerCluster[cluster]++;
 		}
 		

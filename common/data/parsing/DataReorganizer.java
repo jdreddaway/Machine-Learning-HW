@@ -13,15 +13,18 @@ public class DataReorganizer {
 	 * 
 	 * @param filename
 	 * @param categoryIndex negative means from the end
+	 * @param converter Converts category labels into binary labels; may be null if the labels are already binary
 	 * @throws FileNotFoundException
 	 * @throws CategoryNotBinaryException 
 	 */
-	public void reorganize(String inputFilename, int categoryIndex, String outputFilename) throws FileNotFoundException, CategoryNotBinaryException {
+	public void reorganize(String inputFilename, int categoryIndex, BinaryClassConverter converter, String outputFilename) throws FileNotFoundException, CategoryNotBinaryException {
 		File inputFile = new File(inputFilename);
 		FeatureMapper[] featureMappers = learn(inputFile);
 		
 		categoryIndex = categoryIndex >= 0 ? categoryIndex : featureMappers.length + categoryIndex;
-		if (!featureMappers[categoryIndex].isBinary()) {
+		if (converter != null) {
+			featureMappers[categoryIndex] = new CategoryMapper(converter);
+		} else if (!featureMappers[categoryIndex].isBinary()) {
 			throw new CategoryNotBinaryException(featureMappers[categoryIndex]);
 		}
 		
@@ -56,12 +59,10 @@ public class DataReorganizer {
 	private void reorganize(PrintWriter writer, String datapoint, FeatureMapper[] featureMappers, int categoryIndex) throws CategoryNotBinaryException {
 		List<String> parsedData = parseLine(datapoint);
 		try {
-			try {
-				double category = featureMappers[categoryIndex].map(parsedData.get(categoryIndex))[0];
-				writer.print(category);
-			} catch (IndexOutOfBoundsException ioobe) {
-				throw new RuntimeException("Offending line: " + datapoint, ioobe);
-			}
+			double category = featureMappers[categoryIndex].map(parsedData.get(categoryIndex))[0];
+			writer.print(category);
+		} catch (IndexOutOfBoundsException ioobe) {
+			throw new RuntimeException("Offending line: " + datapoint, ioobe);
 		} catch (UnlearnedValueException e) {
 			throw new CategoryNotBinaryException(featureMappers[categoryIndex]);
 		}
@@ -139,5 +140,10 @@ public class DataReorganizer {
 			
 			return ret;
 		}
+	}
+	
+	public static void main(String[] args) throws FileNotFoundException, CategoryNotBinaryException {
+		DataReorganizer reorganizer = new DataReorganizer();
+		reorganizer.reorganize("abalone/abalone.data", -1, new SplitBinaryConverter(10), "abalone/reorganized.csv");
 	}
 }

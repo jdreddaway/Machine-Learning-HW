@@ -88,7 +88,7 @@ public class Program {
 	private static void processAdultData() {
 		DataReorganizer reorganizer = new DataReorganizer();
 		try {
-			reorganizer.reorganize("adult/adult.data", -1, "adult/training.csv");
+			reorganizer.reorganize("adult/adult.data", -1, null, "adult/training.csv");
 		} catch (FileNotFoundException | CategoryNotBinaryException e) {
 			throw new RuntimeException(e);
 		}

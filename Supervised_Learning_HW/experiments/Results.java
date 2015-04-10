@@ -19,9 +19,9 @@ public class Results {
 	
 	public void print(PrintStream writer) {
 		String accuracyFormat = "%1.4f";
-		writer.printf(accuracyFormat, calcAccuracy(trainingResults));
+		writer.printf(accuracyFormat, getTrainingAccuracy());
 		writer.print(',');
-		writer.printf(accuracyFormat, calcAccuracy(testResults));
+		writer.printf(accuracyFormat, getTestAccuracy());
 		writer.print(',');
 		writer.print(trainingTime);
 		writer.print(',');
@@ -34,6 +34,14 @@ public class Results {
 	
 	public void printLabels(PrintWriter writer) {
 		writer.print("training accuracy,test accuracy,training time,test time,training results,test results");
+	}
+	
+	public double getTrainingAccuracy() {
+		return calcAccuracy(trainingResults);
+	}
+	
+	public double getTestAccuracy() {
+		return calcAccuracy(testResults);
 	}
 	
 	private double calcAccuracy(boolean[] results) {
