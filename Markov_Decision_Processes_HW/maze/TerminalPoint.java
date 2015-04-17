@@ -1,3 +1,4 @@
+package maze;
 
 public class TerminalPoint extends Point {
 

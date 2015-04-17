@@ -1,7 +1,11 @@
+package maze;
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Scanner;
 
 import rl.MazeMarkovDecisionProcess;
 
@@ -38,14 +42,23 @@ public class NegativeMazeMDP extends MazeMarkovDecisionProcess {
 			return super.isTerminalState(stateNum);
 		}
 	}
+	
+	public static NegativeMazeMDP createMaze(File mazeFile, double motionFailureProbability,
+			double trapCost, double goalReward) throws FileNotFoundException {
+		char[][] maze = loadMaze(mazeFile);
+		return createMaze(maze, motionFailureProbability, trapCost, goalReward);
+	}
 
 	/**
 	 * 
 	 * @param maze maze[row][col]
 	 * @param motionFailureProbability
+	 * @param trapCost Should be a positive number. Will become negative later.
+	 * @param goalReward the reward for reaching the goal
 	 * @return
 	 */
-	public static NegativeMazeMDP createMaze(char[][] maze, double motionFailureProbability, double trapCost, double goalReward) {
+	public static NegativeMazeMDP createMaze(char[][] maze, double motionFailureProbability,
+			double trapCost, double goalReward) {
 		TerminalPoint goal = null;
 		List<TerminalPoint> traps = new ArrayList<>();
 		Point start = null;
@@ -53,7 +66,7 @@ public class NegativeMazeMDP extends MazeMarkovDecisionProcess {
 		int rowSize = maze[0].length;
 		for (int row = 0; row < maze.length; row++) {
 			if (rowSize != maze[row].length) {
-				throw new InvalidMazeException("Row " + row + " has a different length than the first.");
+				throw new InvalidMazeException("Line " + (row + 1) + " has a different length than the first.");
 			}
 			
 			for (int col = 0; col < rowSize; col++) {
@@ -73,11 +86,36 @@ public class NegativeMazeMDP extends MazeMarkovDecisionProcess {
 					
 					start = otherStart;
 				} else if (currentChar == TRAP) {
-					traps.add(new TerminalPoint(col, row, trapCost));
+					traps.add(new TerminalPoint(col, row, -trapCost));
 				}
 			}
 		}
 		
 		return new NegativeMazeMDP(maze, goal, start, traps, motionFailureProbability);
+	}
+	
+	public static char[][] loadMaze(File file) throws FileNotFoundException {
+		try (Scanner scan = new Scanner(file)) {
+			List<List<Character>> mazeList = new ArrayList<>();
+			while(scan.hasNextLine()) {
+				String line = scan.nextLine();
+				List<Character> lineList = new ArrayList<>();
+				for (int i = 0; i < line.length(); i++) {
+					lineList.add(line.charAt(i));
+				}
+				mazeList.add(lineList);
+			}
+			
+			char[][] maze = new char[mazeList.size()][];
+			for (int i = 0; i < mazeList.size(); i++) {
+				List<Character> line = mazeList.get(i);
+				maze[i] = new char[line.size()];
+				for (int j = 0; j < line.size(); j++) {
+					maze[i][j] = line.get(j);
+				}
+			}
+			
+			return maze;
+		}
 	}
 }
