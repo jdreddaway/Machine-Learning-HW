@@ -100,9 +100,9 @@ public class NegativeMazeMDP extends MazeMarkovDecisionProcess {
 	
 	@Override
 	public double transitionProbability(int fromState, int toState, int a) {
-        Motion motion = Motion.create(this, a);
-        MotionProbability probabilities = motion.createMotionProbability(fromState, motionFailureProbability);
-        return probabilities.getProbability(toState);
+		Motion motion = Motion.create(this, a);
+		MotionProbability probabilities = motion.createMotionProbability(fromState, motionFailureProbability);
+		return probabilities.getProbability(toState);
     }
 	
 	public boolean isMoveableLocation(int x, int y) {
