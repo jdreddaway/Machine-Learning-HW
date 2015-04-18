@@ -15,8 +15,12 @@ public class NegativeMazeMDP extends MazeMarkovDecisionProcess {
 	
 	private final Map<Integer, TerminalPoint> traps;
 
-	public NegativeMazeMDP(char[][] maze, TerminalPoint goal, Point start, List<TerminalPoint> traps, double motionFailureProbability) {
+	private final double motionFailureProbability;
+
+	public NegativeMazeMDP(char[][] maze, TerminalPoint goal, Point start, List<TerminalPoint> traps,
+			double motionFailureProbability) {
 		super(maze, goal.col, goal.row, start.col, start.row, motionFailureProbability);
+		this.motionFailureProbability = motionFailureProbability;
 		
 		this.traps = new HashMap<>();
 		for (TerminalPoint each : traps) {
@@ -80,7 +84,7 @@ public class NegativeMazeMDP extends MazeMarkovDecisionProcess {
 					goal = otherGoal;
 				} else if (currentChar == MazeMarkovDecisionProcess.AGENT) {
 					Point otherStart = new Point(col, row);
-					if (goal != null) {
+					if (start != null) {
 						throw new InvalidMazeException("Multiple starts detected. One at " + start + " and another at " + otherStart);
 					}
 					
@@ -92,6 +96,19 @@ public class NegativeMazeMDP extends MazeMarkovDecisionProcess {
 		}
 		
 		return new NegativeMazeMDP(maze, goal, start, traps, motionFailureProbability);
+	}
+	
+	@Override
+	public double transitionProbability(int fromState, int toState, int a) {
+        Motion motion = Motion.create(this, a);
+        MotionProbability probabilities = motion.createMotionProbability(fromState, motionFailureProbability);
+        return probabilities.getProbability(toState);
+    }
+	
+	public boolean isMoveableLocation(int x, int y) {
+		boolean xInBounds = x >= 0 && x < getWidth();
+		boolean yInBounds = y >= 0 && y < getHeight();
+		return xInBounds && yInBounds && !isObstacle(x, y);
 	}
 	
 	public static char[][] loadMaze(File file) throws FileNotFoundException {

@@ -31,7 +31,7 @@ public class Program {
 
 		Function<Double, NegativeMazeMDP> mdpCreator =
 				(reward) -> NegativeMazeMDP.createMaze(maze, motionFailureProbability, trapCost, reward);
-		Function<MarkovDecisionProcess, PolicyLearner> learnerFactory = (mdp) -> new ValueIteration(gamma, mdp);
+		Function<MarkovDecisionProcess, PolicyLearner> learnerFactory = (mdp) -> new ValueIterationMod(gamma, mdp);
 		Function<PolicyLearner, Trainer> trainerFactory = (learner) -> new ConvergenceTrainer(learner);
 		PolicyCalculator policyCalculator = new PolicyCalculator(mdpCreator, learnerFactory, trainerFactory);
 		//PolicyLearner iter = new PolicyIteration(gamma, mdp);
