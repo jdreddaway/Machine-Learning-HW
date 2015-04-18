@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 
+import dist.Distribution;
 import rl.MazeMarkovDecisionProcess;
 
 
@@ -104,6 +105,27 @@ public class NegativeMazeMDP extends MazeMarkovDecisionProcess {
 		MotionProbability probabilities = motion.createMotionProbability(fromState, motionFailureProbability);
 		return probabilities.getProbability(toState);
     }
+	
+	@Override
+	public int sampleState(int i, int a) {
+		Motion desiredMotion = Motion.create(this, a);
+
+		double leftProbability = motionFailureProbability / 2;
+		double rightProbability = motionFailureProbability;
+		double coin = Distribution.random.nextDouble();
+		Motion actualMotion;
+		if (coin < leftProbability) {
+			actualMotion = desiredMotion.getLeftMotion();
+        } else if (coin < rightProbability) {
+        	actualMotion = desiredMotion.getRightMotion();
+        } else {
+        	actualMotion = desiredMotion;
+        }
+
+        int nextState = actualMotion.getForwardState(i);
+        
+        return nextState;
+	}
 	
 	public boolean isMoveableLocation(int x, int y) {
 		boolean xInBounds = x >= 0 && x < getWidth();

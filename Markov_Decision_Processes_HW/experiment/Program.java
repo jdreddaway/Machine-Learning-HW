@@ -36,10 +36,20 @@ public class Program {
 		PolicyCalculator policyCalculator = new PolicyCalculator(mdpCreator, learnerFactory, trainerFactory);
 		//PolicyLearner iter = new PolicyIteration(gamma, mdp);
 		
-		NegativeMazeMDP sampleMdp = mdpCreator.apply(goalReward);
+		NegativeMazeMDP sampleMdp = NegativeMazeMDP.createMaze(maze, 0, trapCost, goalReward);
+		List<PolicyRange> policies = findPoliciesWithDifferentRewards(
+				policyCalculator, Program::policiesAreEqual);
+		MazeMarkovDecisionProcessVisualization visualizer = new MazeMarkovDecisionProcessVisualization(sampleMdp);
+		for (PolicyRange policy : policies) {
+			System.out.println(policy.toString(visualizer));
+			System.out.println();
+			System.out.println("--------------------------");
+			System.out.println();
+		}
+		/*
 		Policy policy = policyCalculator.calcPolicy(goalReward);
 		MazeMarkovDecisionProcessVisualization visualizer = new MazeMarkovDecisionProcessVisualization(sampleMdp);
-		System.out.println(visualizer.toString(policy));
+		*/
 	}
 	
 	/**
@@ -54,9 +64,9 @@ public class Program {
 		List<PolicyRange> policies = new ArrayList<>();
 		final double initialIncrease = 16;
 		
-		double absoluteMaxReward = Double.MAX_VALUE;
+		double absoluteMaxReward = Double.MAX_VALUE / 2;
 		Policy absoluteUpperPolicy = policyFinder.calcPolicy(absoluteMaxReward);
-
+		
 		double lowerReward = 1;
 		Policy lowerPolicy = policyFinder.calcPolicy(lowerReward);
 		PolicyRange lowerRange = new PolicyRange(lowerReward, lowerReward, lowerPolicy);

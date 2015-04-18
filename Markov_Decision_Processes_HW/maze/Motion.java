@@ -55,7 +55,7 @@ class Motion {
 	}
 	
 	public int getRightState(int currentState) {
-		return getLeftMotion().getReverseMotion().getForwardState(currentState);
+		return getRightMotion().getForwardState(currentState);
 	}
 	
 	public int getReverseState(int currentState) {
@@ -91,6 +91,10 @@ class Motion {
 	
 	public Motion getReverseMotion() {
 		return new Motion(maze, -dx, -dy);
+	}
+	
+	public Motion getRightMotion() {
+		return getLeftMotion().getReverseMotion();
 	}
 	
 	public MotionProbability createMotionProbability(int currentState, double motionFailureProbability) {
