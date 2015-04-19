@@ -1,5 +1,6 @@
 package experiment;
 
+import maze.NegativeMazeMDP;
 import rl.MarkovDecisionProcess;
 import rl.Policy;
 import rl.PolicyLearner;
@@ -53,11 +54,9 @@ public class ValueIterationMod implements PolicyLearner {
                     maxAction = a;
                 }
             }
-            // check if we're done
-            difference = Math.max(Math.abs(values[i] - maxActionVal), difference);
 
-            //TODO test
             if (!process.isTerminalState(i)) {
+				difference = Math.max(Math.abs(values[i] - maxActionVal), difference);
 				values[i] = maxActionVal;
             }
         }

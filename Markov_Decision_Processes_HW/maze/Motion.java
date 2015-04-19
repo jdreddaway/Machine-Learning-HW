@@ -2,7 +2,7 @@ package maze;
 
 import rl.MazeMarkovDecisionProcess;
 
-class Motion {
+public class Motion {
 	
 	public final int dx, dy;
 	private final NegativeMazeMDP maze;

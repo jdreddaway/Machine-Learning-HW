@@ -17,11 +17,15 @@ public class NegativeMazeMDP extends MazeMarkovDecisionProcess {
 	private final Map<Integer, TerminalPoint> traps;
 
 	private final double motionFailureProbability;
+	private final double timePenalty;
+	private final TerminalPoint goal;
 
 	public NegativeMazeMDP(char[][] maze, TerminalPoint goal, Point start, List<TerminalPoint> traps,
-			double motionFailureProbability) {
+			double motionFailureProbability, double timePenalty) {
 		super(maze, goal.col, goal.row, start.col, start.row, motionFailureProbability);
 		this.motionFailureProbability = motionFailureProbability;
+		this.timePenalty = timePenalty;
+		this.goal = goal;
 		
 		this.traps = new HashMap<>();
 		for (TerminalPoint each : traps) {
@@ -34,8 +38,10 @@ public class NegativeMazeMDP extends MazeMarkovDecisionProcess {
 	public double reward(int stateNum, int action) {
 		if (traps.containsKey(stateNum)) {
 			return traps.get(stateNum).reward;
+		} else if (stateFor(goal.col, goal.row) == stateNum) {
+			return goal.reward;
 		} else {
-			return super.reward(stateNum, action);
+			return -timePenalty;
 		}
 	}
 	
@@ -49,9 +55,9 @@ public class NegativeMazeMDP extends MazeMarkovDecisionProcess {
 	}
 	
 	public static NegativeMazeMDP createMaze(File mazeFile, double motionFailureProbability,
-			double trapCost, double goalReward) throws FileNotFoundException {
+			double trapCost, double goalReward, double timePenalty) throws FileNotFoundException {
 		char[][] maze = loadMaze(mazeFile);
-		return createMaze(maze, motionFailureProbability, trapCost, goalReward);
+		return createMaze(maze, motionFailureProbability, trapCost, goalReward, timePenalty);
 	}
 
 	/**
@@ -60,10 +66,11 @@ public class NegativeMazeMDP extends MazeMarkovDecisionProcess {
 	 * @param motionFailureProbability
 	 * @param trapCost Should be a positive number. Will become negative later.
 	 * @param goalReward the reward for reaching the goal
+	 * @param timePenalty the cost for staying alive
 	 * @return
 	 */
 	public static NegativeMazeMDP createMaze(char[][] maze, double motionFailureProbability,
-			double trapCost, double goalReward) {
+			double trapCost, double goalReward, double timePenalty) {
 		TerminalPoint goal = null;
 		List<TerminalPoint> traps = new ArrayList<>();
 		Point start = null;
@@ -96,7 +103,7 @@ public class NegativeMazeMDP extends MazeMarkovDecisionProcess {
 			}
 		}
 		
-		return new NegativeMazeMDP(maze, goal, start, traps, motionFailureProbability);
+		return new NegativeMazeMDP(maze, goal, start, traps, motionFailureProbability, timePenalty);
 	}
 	
 	@Override

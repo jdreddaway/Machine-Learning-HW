@@ -5,40 +5,36 @@ import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Scanner;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
+import maze.NegativeMazeMDP;
 import rl.MarkovDecisionProcess;
 import rl.MazeMarkovDecisionProcessVisualization;
 import rl.Policy;
-import rl.PolicyIteration;
 import rl.PolicyLearner;
-import rl.ValueIteration;
-import shared.ConvergenceTrainer;
+import shared.ThresholdTrainer;
 import shared.Trainer;
-import maze.NegativeMazeMDP;
 
 public class Program {
 
 	public static void main(String[] args) throws FileNotFoundException {
 		File mazeFile = new File("mdp/cliffs.txt");
 		double motionFailureProbability = .1;
-		double trapCost = 10000000;
-		double goalReward = 1;
-		double gamma = 0.95;
+		double trapCost = 300;
+		double timePenalty = 1;
+		double gamma = 0.99;
 		char[][] maze = NegativeMazeMDP.loadMaze(mazeFile);
 
 		Function<Double, NegativeMazeMDP> mdpCreator =
-				(reward) -> NegativeMazeMDP.createMaze(maze, motionFailureProbability, trapCost, reward);
+				(reward) -> NegativeMazeMDP.createMaze(maze, motionFailureProbability, trapCost, reward, timePenalty);
 		Function<MarkovDecisionProcess, PolicyLearner> learnerFactory = (mdp) -> new ValueIterationMod(gamma, mdp);
-		Function<PolicyLearner, Trainer> trainerFactory = (learner) -> new ConvergenceTrainer(learner);
+		Function<PolicyLearner, Trainer> trainerFactory = (learner) -> new ThresholdTrainer(learner, 1E-2, 10000);
 		PolicyCalculator policyCalculator = new PolicyCalculator(mdpCreator, learnerFactory, trainerFactory);
 		//PolicyLearner iter = new PolicyIteration(gamma, mdp);
 		
-		NegativeMazeMDP sampleMdp = NegativeMazeMDP.createMaze(maze, 0, trapCost, goalReward);
+		NegativeMazeMDP sampleMdp = NegativeMazeMDP.createMaze(maze, 0, trapCost, 1, timePenalty);
 		List<PolicyRange> policies = findPoliciesWithDifferentRewards(
-				policyCalculator, Program::policiesAreEqual);
+				policyCalculator, new OptimalPolicyDistinguisher(sampleMdp));
 		MazeMarkovDecisionProcessVisualization visualizer = new MazeMarkovDecisionProcessVisualization(sampleMdp);
 		for (PolicyRange policy : policies) {
 			System.out.println(policy.toString(visualizer));
@@ -64,7 +60,7 @@ public class Program {
 		List<PolicyRange> policies = new ArrayList<>();
 		final double initialIncrease = 16;
 		
-		double absoluteMaxReward = Double.MAX_VALUE / 2;
+		double absoluteMaxReward = 10000;
 		Policy absoluteUpperPolicy = policyFinder.calcPolicy(absoluteMaxReward);
 		
 		double lowerReward = 1;
