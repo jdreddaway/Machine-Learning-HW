@@ -34,11 +34,19 @@ public class NegativeMazeMDP extends MazeMarkovDecisionProcess {
 		}
 	}
 	
+	public boolean isGoal(int stateNum) {
+		return stateFor(goal.col, goal.row) == stateNum;
+	}
+	
+	public boolean isTrap(int stateNum) {
+		return traps.containsKey(stateNum);
+	}
+	
 	@Override
 	public double reward(int stateNum, int action) {
-		if (traps.containsKey(stateNum)) {
+		if (isTrap(stateNum)) {
 			return traps.get(stateNum).reward;
-		} else if (stateFor(goal.col, goal.row) == stateNum) {
+		} else if (isGoal(stateNum)) {
 			return goal.reward;
 		} else {
 			return -timePenalty;

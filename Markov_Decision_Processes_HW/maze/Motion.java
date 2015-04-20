@@ -109,4 +109,24 @@ public class Motion {
 
 		return probability;
 	}
+	
+	@Override
+	public boolean equals(Object other) { 
+		if (!(other instanceof Motion)) {
+			return false;
+		}
+		
+		Motion otherMotion = (Motion) other;
+		return this.dx == otherMotion.dx && this.dy == otherMotion.dy;
+	}
+	
+	@Override
+	public int hashCode() {
+		return Integer.hashCode(dx) ^ Integer.hashCode(dy);
+	}
+	
+	@Override
+	public String toString() {
+		return "(" + dx + "," + dy + ")";
+	}
 }

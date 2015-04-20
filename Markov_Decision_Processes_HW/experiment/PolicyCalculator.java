@@ -1,8 +1,10 @@
 package experiment;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.StringJoiner;
 import java.util.function.Function;
 
-import rl.MarkovDecisionProcess;
 import rl.MazeMarkovDecisionProcess;
 import rl.Policy;
 import rl.PolicyLearner;
@@ -10,23 +12,26 @@ import shared.Trainer;
 
 public class PolicyCalculator {
 	
-	private final Function<Double, ? extends MazeMarkovDecisionProcess> mazeFactory;
-	private final Function<MarkovDecisionProcess, ? extends PolicyLearner> learnerFactory;
+	private final Function<MazeMarkovDecisionProcess, ? extends PolicyLearner> learnerFactory;
 	private final Function<PolicyLearner, ? extends Trainer> trainerFactory;
+	
+	private List<Long> trainingTimes = new ArrayList<>();
 
-	public PolicyCalculator(Function<Double, ? extends MazeMarkovDecisionProcess> mazeFactory,
-			Function<MarkovDecisionProcess, ? extends PolicyLearner> learnerFactory,
+	public PolicyCalculator(Function<MazeMarkovDecisionProcess, ? extends PolicyLearner> learnerFactory,
 			Function<PolicyLearner, ? extends Trainer> trainerFactory) {
-		this.mazeFactory = mazeFactory;
 		this.learnerFactory = learnerFactory;
 		this.trainerFactory = trainerFactory;
 	}
 
-	public Policy calcPolicy(double reward) {
-		MazeMarkovDecisionProcess mdp = mazeFactory.apply(reward);
+	public Policy calcPolicy(MazeMarkovDecisionProcess mdp) {
 		PolicyLearner iter = learnerFactory.apply(mdp);
 		Trainer trainer = trainerFactory.apply(iter);
+
+		long start = System.currentTimeMillis();
 		trainer.train();
+		long finish = System.currentTimeMillis();
+		trainingTimes.add(finish - start);
+
 		Policy policy = iter.getPolicy();
 		
 		/*
@@ -35,5 +40,14 @@ public class PolicyCalculator {
 		*/
 
 		return policy;
+	}
+	
+	public String getTrainingTimesString() {
+		StringJoiner joiner = new StringJoiner(",");
+		for (Long time : trainingTimes) {
+			joiner.add("" + time);
+		}
+		
+		return joiner.toString();
 	}
 }

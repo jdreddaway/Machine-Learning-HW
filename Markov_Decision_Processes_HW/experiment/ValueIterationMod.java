@@ -1,13 +1,13 @@
 package experiment;
 
-import maze.NegativeMazeMDP;
 import rl.MarkovDecisionProcess;
 import rl.Policy;
 import rl.PolicyLearner;
 
 public class ValueIterationMod implements PolicyLearner {
 
-    private double gamma;
+	private static final long serialVersionUID = 1L;
+	private double gamma;
     private MarkovDecisionProcess process;
     private double[] values;
     
@@ -40,7 +40,6 @@ public class ValueIterationMod implements PolicyLearner {
         for (int i = 0; i < stateCount; i++) {
             // find the maximum action
             double maxActionVal = -Double.MAX_VALUE;
-            int maxAction = 0;
             for (int a = 0; a < actionCount; a++) {
                 double actionVal = 0;
                 for (int j = 0; j < stateCount; j++) {
@@ -51,7 +50,6 @@ public class ValueIterationMod implements PolicyLearner {
                 actionVal = process.reward(i, a) + gamma * actionVal;
                 if (actionVal > maxActionVal) {
                     maxActionVal = actionVal;
-                    maxAction = a;
                 }
             }
 

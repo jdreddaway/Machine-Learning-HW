@@ -113,7 +113,7 @@ public class Program {
 		DistanceMeasure distMeasure = new EuclideanDistance();
 		Collection<KnnClassifierWrapper> classifiers = new ArrayList<>();
 		while (permutator.hasNext()) {
-			int[] indices = permutator.getNext();
+			int[] indices = permutator.next();
 			classifiers.add(new KnnClassifierWrapper(
 					evaluator, kValues[indices[0]], weightValues[indices[1]], distMeasure, ranges[indices[2]]));
 		}
@@ -147,7 +147,7 @@ public class Program {
 		Evaluator evaluater = new Evaluator();
 		
 		while (permutater.hasNext()) {
-			int[] indices = permutater.getNext();
+			int[] indices = permutater.next();
 			classifiers.add(new SvmClassifierWrapper(evaluater, cValues[indices[0]], kernels.get(indices[1])));
 		}
 		
@@ -161,7 +161,7 @@ public class Program {
 
 		Collection<KernelFactory> kernels = new ArrayList<>();
 		while (permutater.hasNext()) {
-			int[] indices = permutater.getNext();
+			int[] indices = permutater.next();
 			kernels.add(new PolynomialKernelFactory(
 					dotProductWeights[indices[0]], constants[indices[1]], exponents[indices[2]]));
 		}
@@ -199,7 +199,7 @@ public class Program {
 		Evaluator evaluator = new Evaluator();
 		
 		while (permutator.hasNext()) {
-			int[] indices = permutator.getNext();
+			int[] indices = permutator.next();
 			ret.add(new BoostingClassifierWrapper(evaluator, sizes[indices[1]], functionApproximaterFactories.get(indices[0])));
 		}
 		
@@ -245,7 +245,7 @@ public class Program {
 
 		Collection<NeuralNetworkClassifierWrapper> classifiers = new ArrayList<>();
 		while (permutator.hasNext()) {
-			int[] permutation = permutator.getNext();
+			int[] permutation = permutator.next();
 			DifferentiableActivationFunction activationFunction = activationFunctions[permutation[0]];
 			WeightUpdateRule updateRule = updateRules[permutation[1]];
 			int numEpochs = epochs[permutation[2]];

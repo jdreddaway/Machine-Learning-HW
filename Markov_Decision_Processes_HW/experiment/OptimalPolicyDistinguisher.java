@@ -6,7 +6,6 @@ import java.util.Stack;
 
 import maze.Motion;
 import maze.NegativeMazeMDP;
-import rl.MarkovDecisionProcess;
 import rl.Policy;
 
 public class OptimalPolicyDistinguisher implements Distinguisher<Policy> {

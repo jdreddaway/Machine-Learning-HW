@@ -1,6 +1,5 @@
 package experiment;
 
-import rl.MazeMarkovDecisionProcessVisualization;
 import rl.Policy;
 
 public class PolicyRange {
@@ -15,7 +14,7 @@ public class PolicyRange {
 		this.policy = policy;
 	}
 	
-	public String toString(MazeMarkovDecisionProcessVisualization visualizer) {
+	public String toString(PolicyVisualizer visualizer) {
 		String ret = minReward + " - " + maxReward + "\n";
 		return ret + visualizer.toString(policy);
 	}
